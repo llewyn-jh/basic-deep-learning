@@ -38,7 +38,7 @@ ipython_config.py
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -306,5 +306,15 @@ dmypy.json
 !.vscode/launch.json
 !.vscode/extensions.json
 *.code-workspace
+
+# ETC  #
+bin/
+include/
+do-it-dl/
+lib/
+share/
+etc/
+lib64
+pyvenv.cfg
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,vscode,linux,macos,jupyternotebooks
