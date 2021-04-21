@@ -65,24 +65,24 @@ class RecurrentNetwork:
 
         m = len(x)
 
-        w_2_grad = np.dot(self.h[-1], err) / m
-        b_2_grad = np.sum(err) / m
+        w2_grad = np.dot(self.h[-1], err) / m
+        b2_grad = np.sum(err) / m
 
         seq = np.swapaxes(x, 0, 1)
-        w1h_grad = w1x_grad = b_1_grad = 0
+        w1h_grad = w1x_grad = b1_grad = 0
         err2cell = np.dot(err, self.w2.T) * (1 - self.h[-1] ** 2)
 
         for sample, h in zip(seq[::-1][:10], self.h[:-1][::-1][:10]):
             w1h_grad += np.dot(h.T, err2cell)
             w1x_grad += np.dot(sample.T, err2cell)
-            b_1_grad += np.sum(err2cell, axis=0)
+            b1_grad += np.sum(err2cell, axis=0)
             err2cell = np.dot(err2cell, self.w1h) * (1 - h ** 2)
 
         w1h_grad /= m
         w1x_grad /= m
-        b_1_grad /= m
+        b1_grad /= m
 
-        return w1h_grad, w1x_grad, b_1_grad, w_2_grad, b_2_grad
+        return w1h_grad, w1x_grad, b1_grad, w2_grad, b2_grad
 
     def fit(self, x, y, epochs=100, x_val=None, y_val=None):
         """Train a network. Not save all of kernels and biases in a network.
@@ -105,12 +105,12 @@ class RecurrentNetwork:
                 z = self.forpass(x_batch)
                 a = 1 / (1 + np.exp(-z))
                 err = - (y_batch - a)
-                w1h_grad, w1x_grad, b_1_grad, w_2_grad, b_2_grad = self.backprop(x_batch, err)
+                w1h_grad, w1x_grad, b1_grad, w2_grad, b2_grad = self.backprop(x_batch, err)
                 self.w1h -= self.lr * w1h_grad
                 self.w1x -= self.lr * w1x_grad
-                self.b1 -= self.lr * b_1_grad
-                self.w2 -= self.lr * w_2_grad
-                self.b2 -= self.lr * b_2_grad
+                self.b1 -= self.lr * b1_grad
+                self.w2 -= self.lr * w2_grad
+                self.b2 -= self.lr * b2_grad
                 a = np.clip(a, 1e-10, 1-1e-10)
                 loss = np.mean(-(y_batch * np.log(a) + (1 - y_batch) * np.log(1 - a)))
                 batch_losses.append(loss)
