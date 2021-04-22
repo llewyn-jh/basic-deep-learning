@@ -316,5 +316,6 @@ share/
 etc/
 lib64
 pyvenv.cfg
+/FashionMNIST
 
 # End of https://www.toptal.com/developers/gitignore/api/python,pycharm,vscode,linux,macos,jupyternotebooks
