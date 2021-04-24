@@ -103,8 +103,8 @@ class RecurrentNetwork:
             for x_batch, y_batch in self.gen_batch(x, y):
                 print('.', end='')
                 z = self.forpass(x_batch)
-                a = 1 / (1 + np.exp(-z))
-                err = - (y_batch - a)
+                activation = 1 / (1 + np.exp(-z))
+                err = - (y_batch - activation)
                 weight_1h_grad, weight_1x_grad, bias_1_grad, weight_2_grad, bias_2_grad = \
                     self.backprop(x_batch, err)
                 self.weight_1h -= self.learning_rate * weight_1h_grad
@@ -112,8 +112,8 @@ class RecurrentNetwork:
                 self.bias_1 -= self.learning_rate * bias_1_grad
                 self.weight_2 -= self.learning_rate * weight_2_grad
                 self.bias_2 -= self.learning_rate * bias_2_grad
-                a = np.clip(a, 1e-10, 1-1e-10)
-                loss = np.mean(-(y_batch * np.log(a) + (1 - y_batch) * np.log(1 - a)))
+                cliped_activation = np.clip(activation, 1e-10, 1-1e-10)
+                loss = np.mean(-(y_batch * np.log(cliped_activation) + (1 - y_batch) * np.log(1 - cliped_activation)))
                 batch_losses.append(loss)
             print()
             self.losses.append(np.mean(batch_losses))
@@ -147,8 +147,8 @@ class RecurrentNetwork:
 
         z = self.forpass(x_val)
         activation = 1 / (1 + np.exp(-z))
-        activation = np.clip(activation, 1e-10, 1-1e-10)
-        loss = np.mean(-(y_val * np.log(activation) + (1 - y_val) * np.log(1 - activation)))
+        cliped_activation = np.clip(activation, 1e-10, 1-1e-10)
+        loss = np.mean(-(y_val * np.log(cliped_activation) + (1 - y_val) * np.log(1 - cliped_activation)))
         self.val_losses.append(loss)
 
     def predict(self, x):
@@ -159,8 +159,8 @@ class RecurrentNetwork:
         y: input data, target of train or validation dataset."""
 
         z = self.forpass(x)
-        a = 1 / (1 + np.exp(-z))
-        return a > 0.5
+        activation = 1 / (1 + np.exp(-z))
+        return activation > 0.5
 
     def score(self, x, y):
         """Calculate accuracy of a network.
