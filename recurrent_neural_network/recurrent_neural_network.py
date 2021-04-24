@@ -1,5 +1,4 @@
-"""Recurrent Neural Network.
-Study principals of a recurrent neural newtwork."""
+"""Recurrent Neural Network."""
 
 import tensorflow as tf
 import numpy as np
@@ -17,17 +16,17 @@ class RecurrentNetwork:
 
         self.n_cells = n_cells
         self.batch_size = batch_size
-        self.w1h = None
-        self.w1x = None
-        self.b1 = None
-        self.w2 = None
-        self.b2 = None
-        self.h = None
+        self.weight_1h = None
+        self.weight_1x = None
+        self.bias_1 = None
+        self.weight_2 = None
+        self.bias_2 = None
+        self.history = None
         self.losses = []
         self.val_losses = []
-        self.lr = learning_rate
+        self.learning_rate = learning_rate
 
-    def init_weights(self, n_features, n_classes):
+    def init_weights(self, n_features: int, n_classes: int):
         """Set initial kernels of hidden layers.
         We use Orthogonal, GlorotUniform of tensorflow initializers and numpy zeros.
         n_features: the number of cells
@@ -35,11 +34,11 @@ class RecurrentNetwork:
 
         orth_init = tf.initializers.Orthogonal()
         glorot_init = tf.initializers.GlorotUniform()
-        self.w1h = orth_init((self.n_cells, self.n_cells)).numpy()
-        self.w1x = glorot_init((n_features, self.n_cells)).numpy()
-        self.b1 = np.zeros(self.n_cells)
-        self.w2 = glorot_init((self.n_cells, n_classes)).numpy()
-        self.b2 = np.zeros(n_classes)
+        self.weight_1h = orth_init((self.n_cells, self.n_cells)).numpy()
+        self.weight_1x = glorot_init((n_features, self.n_cells)).numpy()
+        self.bias_1 = np.zeros(self.n_cells)
+        self.weight_2 = glorot_init((self.n_cells, n_classes)).numpy()
+        self.bias_2 = np.zeros(n_classes)
 
     def forpass(self, x):
         """Calculate a forward in a network. Return values before final activation in a network.
@@ -47,13 +46,14 @@ class RecurrentNetwork:
         You have to encode a dataset to one hot encoding.
         A shape of data is (self.batch_size, n_features, n_features)"""
 
-        self.h = [np.zeros((x.shape[0], self.n_cells))]
+        self.history = [np.zeros((x.shape[0], self.n_cells))]
         seq = np.swapaxes(x, 0, 1)
         for sample in seq:
-            z1 = np.dot(sample, self.w1x) + np.dot(self.h[-1], self.w1h) + self.b1
+            z1 = np.dot(sample, self.weight_1x) + \
+                np.dot(self.history[-1], self.weight_1h) + self.bias_1
             h = np.tanh(z1)
-            self.h.append(h)
-            z2 = np.dot(h, self.w2) + self.b2
+            self.history.append(h)
+            z2 = np.dot(h, self.weight_2) + self.bias_2
         return z2
 
     def backprop(self, x, err):
@@ -65,24 +65,24 @@ class RecurrentNetwork:
 
         m = len(x)
 
-        w2_grad = np.dot(self.h[-1], err) / m
-        b2_grad = np.sum(err) / m
+        weight_2_grad = np.dot(self.history[-1], err) / m
+        bias_2_grad = np.sum(err) / m
 
         seq = np.swapaxes(x, 0, 1)
-        w1h_grad = w1x_grad = b1_grad = 0
-        err2cell = np.dot(err, self.w2.T) * (1 - self.h[-1] ** 2)
+        weight_1h_grad = weight_1x_grad = bias_1_grad = 0
+        err2cell = np.dot(err, self.weight_2.T) * (1 - self.history[-1] ** 2)
 
-        for sample, h in zip(seq[::-1][:10], self.h[:-1][::-1][:10]):
-            w1h_grad += np.dot(h.T, err2cell)
-            w1x_grad += np.dot(sample.T, err2cell)
-            b1_grad += np.sum(err2cell, axis=0)
-            err2cell = np.dot(err2cell, self.w1h) * (1 - h ** 2)
+        for sample, h in zip(seq[::-1][:10], self.history[:-1][::-1][:10]):
+            weight_1h_grad += np.dot(h.T, err2cell)
+            weight_1x_grad += np.dot(sample.T, err2cell)
+            bias_1_grad += np.sum(err2cell, axis=0)
+            err2cell = np.dot(err2cell, self.weight_1h) * (1 - h ** 2)
 
-        w1h_grad /= m
-        w1x_grad /= m
-        b1_grad /= m
+        weight_1h_grad /= m
+        weight_1x_grad /= m
+        bias_1_grad /= m
 
-        return w1h_grad, w1x_grad, b1_grad, w2_grad, b2_grad
+        return weight_1h_grad, weight_1x_grad, bias_1_grad, weight_2_grad, bias_2_grad
 
     def fit(self, x, y, epochs=100, x_val=None, y_val=None):
         """Train a network. Not save all of kernels and biases in a network.
@@ -105,12 +105,13 @@ class RecurrentNetwork:
                 z = self.forpass(x_batch)
                 a = 1 / (1 + np.exp(-z))
                 err = - (y_batch - a)
-                w1h_grad, w1x_grad, b1_grad, w2_grad, b2_grad = self.backprop(x_batch, err)
-                self.w1h -= self.lr * w1h_grad
-                self.w1x -= self.lr * w1x_grad
-                self.b1 -= self.lr * b1_grad
-                self.w2 -= self.lr * w2_grad
-                self.b2 -= self.lr * b2_grad
+                weight_1h_grad, weight_1x_grad, bias_1_grad, weight_2_grad, bias_2_grad = \
+                    self.backprop(x_batch, err)
+                self.weight_1h -= self.learning_rate * weight_1h_grad
+                self.weight_1x -= self.learning_rate * weight_1x_grad
+                self.bias_1 -= self.learning_rate * bias_1_grad
+                self.weight_2 -= self.learning_rate * weight_2_grad
+                self.bias_2 -= self.learning_rate * bias_2_grad
                 a = np.clip(a, 1e-10, 1-1e-10)
                 loss = np.mean(-(y_batch * np.log(a) + (1 - y_batch) * np.log(1 - a)))
                 batch_losses.append(loss)
