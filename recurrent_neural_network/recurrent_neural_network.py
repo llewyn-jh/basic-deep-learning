@@ -21,7 +21,7 @@ class RecurrentNetwork:
         self.bias_1 = None
         self.weight_2 = None
         self.bias_2 = None
-        self.history = None
+        self.hidden_states = None
         self.losses = []
         self.val_losses = []
         self.learning_rate = learning_rate
@@ -46,14 +46,14 @@ class RecurrentNetwork:
         You have to encode a dataset to one hot encoding.
         A shape of data is (self.batch_size, n_features, n_features)"""
 
-        self.history = [np.zeros((x.shape[0], self.n_cells))]
+        self.hidden_states = [np.zeros((x.shape[0], self.n_cells))]
         seq = np.swapaxes(x, 0, 1)
         for sample in seq:
             z1 = np.dot(sample, self.weight_1x) + \
-                np.dot(self.history[-1], self.weight_1h) + self.bias_1
-            h = np.tanh(z1)
-            self.history.append(h)
-            z2 = np.dot(h, self.weight_2) + self.bias_2
+                np.dot(self.hidden_states[-1], self.weight_1h) + self.bias_1
+            hidden_state = np.tanh(z1)
+            self.hidden_states.append(hidden_state)
+            z2 = np.dot(hidden_state, self.weight_2) + self.bias_2
         return z2
 
     def backprop(self, x, err):
@@ -65,18 +65,18 @@ class RecurrentNetwork:
 
         m = len(x)
 
-        weight_2_grad = np.dot(self.history[-1], err) / m
+        weight_2_grad = np.dot(self.hidden_states[-1], err) / m
         bias_2_grad = np.sum(err) / m
 
         seq = np.swapaxes(x, 0, 1)
         weight_1h_grad = weight_1x_grad = bias_1_grad = 0
-        err2cell = np.dot(err, self.weight_2.T) * (1 - self.history[-1] ** 2)
+        err2cell = np.dot(err, self.weight_2.T) * (1 - self.hidden_states[-1] ** 2)
 
-        for sample, h in zip(seq[::-1][:10], self.history[:-1][::-1][:10]):
-            weight_1h_grad += np.dot(h.T, err2cell)
+        for sample, hidden_state in zip(seq[::-1][:10], self.hidden_states[:-1][::-1][:10]):
+            weight_1h_grad += np.dot(hidden_state.T, err2cell)
             weight_1x_grad += np.dot(sample.T, err2cell)
             bias_1_grad += np.sum(err2cell, axis=0)
-            err2cell = np.dot(err2cell, self.weight_1h) * (1 - h ** 2)
+            err2cell = np.dot(err2cell, self.weight_1h) * (1 - hidden_state ** 2)
 
         weight_1h_grad /= m
         weight_1x_grad /= m
