@@ -8,7 +8,7 @@ import numpy as np
 from tensorflow.keras.datasets import imdb
 from tensorflow.keras.preprocessing import sequence
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, LSTM, Embedding, BatchNormalization, Dropout, Conv1D, GlobalMaxPooling1D
+from tensorflow.keras.layers import Dense, LSTM, Embedding, BatchNormalization, Dropout
 
 warnings.filterwarnings('ignore')
 
