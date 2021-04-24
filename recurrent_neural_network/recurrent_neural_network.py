@@ -146,9 +146,9 @@ class RecurrentNetwork:
         you have to do one hot encoding and modify some code."""
 
         z = self.forpass(x_val)
-        a = 1 / (1 + np.exp(-z))
-        a = np.clip(a, 1e-10, 1-1e-10)
-        loss = np.mean(-(y_val * np.log(a) + (1 - y_val) * np.log(1 - a)))
+        activation = 1 / (1 + np.exp(-z))
+        activation = np.clip(activation, 1e-10, 1-1e-10)
+        loss = np.mean(-(y_val * np.log(activation) + (1 - y_val) * np.log(1 - activation)))
         self.val_losses.append(loss)
 
     def predict(self, x):
