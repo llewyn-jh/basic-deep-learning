@@ -61,9 +61,10 @@ if __name__ == "__main__":
     x_val = x_train_all[random_index[20000:]]
     y_val = y_train_all[random_index[20000:]]
 
-    # Equalize all length of a sentences.
-    x_train = sequence.pad_sequences(x_train, maxlen=args.num_words)
-    x_val = sequence.pad_sequences(x_val, maxlen=args.num_words)
+    # Equalize all length of sentences.
+    maxlen = 100
+    x_train = sequence.pad_sequences(x_train, maxlen=100)
+    x_val = sequence.pad_sequences(x_val, maxlen=100)
 
     # One hot encoding.
     x_train_onehot = to_categorical(x_train)
